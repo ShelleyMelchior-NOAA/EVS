@@ -104,10 +104,10 @@ export err=$?; err_chk
 chmod 775 plot_all_${MODELNAME}_${RUN}_g2o_plots.sh
 
 ###########################################
-# Run the command files for the PAST31DAYS 
+# Run the command files for the LAST31DAYS 
 ###########################################
 if [ ${run_mpi} = 'yes' ] ; then
-  mpiexec -np 36 --cpu-bind verbose,core --depth=3 cfp plot_all_${MODELNAME}_${RUN}_g2o_plots.sh
+  mpiexec -np 128 -ppn 64 --cpu-bind verbose,depth cfp plot_all_${MODELNAME}_${RUN}_g2o_plots.sh
 else
   echo "not running mpiexec"
   sh plot_all_${MODELNAME}_${RUN}_g2o_plots.sh
@@ -116,7 +116,7 @@ fi
 #######################
 # Gather all the files 
 #######################
-periods='PAST31DAYS PAST90DAYS'
+periods='LAST31DAYS LAST90DAYS'
 if [ $gather = yes ] ; then
   echo "copying all images into one directory"
   cp ${DATA}/wave/*png ${DATA}/sfcshp/.  ## lead_average plots
@@ -124,9 +124,9 @@ if [ $gather = yes ] ; then
   echo "copied $nc lead_average plots"
   for period in ${periods} ; do
     period_lower=$(echo ${period,,})
-    if [ ${period} = 'PAST31DAYS' ] ; then
+    if [ ${period} = 'LAST31DAYS' ] ; then
       period_out='last31days'
-    elif [ ${period} = 'PAST90DAYS' ] ; then
+    elif [ ${period} = 'LAST90DAYS' ] ; then
       period_out='last90days'
     fi
     # check to see if the plots are there
@@ -155,9 +155,11 @@ if [ $gather = yes ] ; then
     if [ "${nc}" > '0' ] ; then
       cd ${DATA}/sfcshp
       tar -cvf evs.${STEP}.${COMPONENT}.${RUN}.${VERIF_CASE}.${period_out}.v${VDATE}.tar evs.*${period_lower}*.png
+      if [ -s evs.${STEP}.${COMPONENT}.${RUN}.${VERIF_CASE}.${period_out}.v${VDATE}.tar ]; then
+	      cp -v evs.${STEP}.${COMPONENT}.${RUN}.${VERIF_CASE}.${period_out}.v${VDATE}.tar ${COMOUTplots}/.
+      fi
     fi
   done
-  cpreq evs.${STEP}.${COMPONENT}.${RUN}.*.tar ${COMOUTplots}/.
 else  
   echo "not copying the plots"
 fi

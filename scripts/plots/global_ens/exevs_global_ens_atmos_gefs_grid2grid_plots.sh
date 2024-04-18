@@ -26,7 +26,6 @@ export init_end=$VDATE
 export valid_end=$VDATE
 
 model_list='ECME CMCE GEFS'
-models='ECME, CMCE, GEFS'
 
 n=0
 while [ $n -le $past_days ] ; do
@@ -159,6 +158,11 @@ for score_type in time_series lead_average ; do
 	     verif_type=pres
 	   fi
 	fi 
+	if [ $FCST_LEVEL_value = P250 ]; then
+	   models='CMCE, GEFS'
+	else
+	   models='ECME, CMCE, GEFS'
+	fi
 
         echo "export PLOT_TYPE=$score_type" >> run_${stats}.${score_type}.${lead}.${VAR}.${FCST_LEVEL_value}.${line_type}.sh
 
@@ -217,7 +221,7 @@ chmod +x run_all_poe.sh
 # Run the POE script in parallel or in sequence order to generate png files
 #**************************************************************************
 if [ $run_mpi = yes ] ; then
-   mpiexec -np 192 -ppn 96 --cpu-bind verbose,core cfp ${DATA}/run_all_poe.sh
+   mpiexec -np 192 -ppn 96 --cpu-bind verbose,depth cfp ${DATA}/run_all_poe.sh
 else
   ${DATA}/run_all_poe.sh
   export err=$?; err_chk
@@ -307,7 +311,9 @@ done     #stats
 tar -cvf evs.plots.${COMPONENT}.${RUN}.${MODELNAME}.${VERIF_CASE}.past${past_days}days.v${VDATE}.tar *.png
 
 if [ $SENDCOM = YES ]; then
-    cpreq evs.plots.${COMPONENT}.${RUN}.${MODELNAME}.${VERIF_CASE}.past${past_days}days.v${VDATE}.tar  $COMOUT/.
+    if [ -s evs.plots.${COMPONENT}.${RUN}.${MODELNAME}.${VERIF_CASE}.past${past_days}days.v${VDATE}.tar ]; then
+        cp -v evs.plots.${COMPONENT}.${RUN}.${MODELNAME}.${VERIF_CASE}.past${past_days}days.v${VDATE}.tar  $COMOUT/.
+    fi
 fi
 
 if [ $SENDDBN = YES ]; then

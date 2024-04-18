@@ -22,52 +22,63 @@ mask_day1=${EVSINspcotlk:0:$index}/cam/spc_otlk.$day1
 mask_day2=${EVSINspcotlk:0:$index}/cam/spc_otlk.$day2
 mask_day3=${EVSINspcotlk:0:$index}/cam/spc_otlk.$day3
 
-
-if [ ! -d  $mask_day1 ] && [ ! -d  $mask_day2 ] && [ ! -d  $mask_day3 ] ; then
+write_job_cards=yes
+if ([ ! -d  $mask_day1 ] || (! ls $mask_day1/spc_otlk.day1_*G227.nc 1> /dev/null 2>&1)) \
+  && ([ ! -d  $mask_day2 ] || (! ls $mask_day2/spc_otlk.day2_*G227.nc 1> /dev/null 2>&1)) \
+  && ([ ! -d  $mask_day3 ] || (! ls $mask_day3/spc_otlk.day3_*G227.nc 1> /dev/null 2>&1)) ; then
   if [ $SENDMAIL = YES ] ; then
     export subject="SPC outlook mask files are Missing for EVS ${COMPONENT}"
     echo "Warning:  No SPC outlook mask files available for ${VDATE}" > mailmsg
-    echo Missing mask directories are $mask_day1 , $mask_day2 and $mask_day3   >> mailmsg
+    echo Missing mask files are $mask_day1/spc_otlk.day1_*G227.nc , $mask_day2/spc_otlk.day2_*G227.nc and $mask_day3/spc_otlk.day3_*G227.nc   >> mailmsg
     echo "Job ID: $jobid" >> mailmsg
     cat mailmsg | mail -s "$subject" $MAILTO
     export err=$?; err_chk
-    exit
+  else
+    echo "WARNING:  No SPC outlook mask files available for ${VDATE}."
+    echo "Missing mask files are $mask_day1/spc_otlk.day1_*G227.nc , $mask_day2/spc_otlk.day2_*G227.nc and $mask_day3/spc_otlk.day3_*G227.nc"
+    echo "This will occur if no outlooks were issued on ${VDATE}."
   fi
+  write_job_cards=no
 fi
 
 
+if ([ -d $mask_day1 ] && (ls $mask_day1/spc_otlk.day1_*G227.nc 1> /dev/null 2>&1)); then
+    cd $mask_day1 
+    files=`ls spc_otlk.day1_*G227.nc`
+    set -A file $files
+    len=${#file[@]}
 
-cd $mask_day1 
-files=`ls spc_otlk.day1_*G227.nc`
-set -A file $files
-len=${#file[@]}
+    spc_otlk_masks=$mask_day1/${file[0]}
 
-spc_otlk_masks=$mask_day1/${file[0]}
+    for (( i=1; i<$len; i++ )); do
+      mask="${file[$i]}"
+      export spc_otlk_masks="$spc_otlk_masks, $mask_day1/${mask}"
+    done
+fi
 
-for (( i=1; i<$len; i++ )); do
-  mask="${file[$i]}"
-  export spc_otlk_masks="$spc_otlk_masks, $mask_day1/${mask}"
-done
+if ([ -d $mask_day2 ] && (ls $mask_day2/spc_otlk.day2_*G227.nc 1> /dev/null 2>&1)); then
+    cd $mask_day2
+    files=`ls spc_otlk.day2_*G227.nc`
+    set -A file $files
+    len=${#file[@]}
 
-cd $mask_day2
-files=`ls spc_otlk.day2_*G227.nc`
-set -A file $files
-len=${#file[@]}
+    for (( i=0; i<$len; i++ )); do
+      mask="${file[$i]}"
+      export spc_otlk_masks="$spc_otlk_masks, $mask_day2/${mask}"
+    done
+fi
 
-for (( i=0; i<$len; i++ )); do
-  mask="${file[$i]}"
-  export spc_otlk_masks="$spc_otlk_masks, $mask_day2/${mask}"
-done
+if ([ -d $mask_day3 ] && (ls $mask_day3/spc_otlk.day3_*G227.nc 1> /dev/null 2>&1)); then
+    cd $mask_day3
+    files=`ls spc_otlk.day3_*G227.nc`
+    set -A file $files
+    len=${#file[@]}
 
-cd $mask_day3
-files=`ls spc_otlk.day3_*G227.nc`
-set -A file $files
-len=${#file[@]}
-
-for (( i=0; i<$len; i++ )); do
-  mask="${file[$i]}"
-  export spc_otlk_masks="$spc_otlk_masks, $mask_day3/${mask}"
-done
+    for (( i=0; i<$len; i++ )); do
+      mask="${file[$i]}"
+      export spc_otlk_masks="$spc_otlk_masks, $mask_day3/${mask}"
+    done
+fi
 
 echo $spc_otlk_masks
 
@@ -79,7 +90,7 @@ cd $WORK
 >run_all_href_spcoutlook_poe.sh
 
 obsv='prepbufr'
-
+if [ "$write_job_cards" = "yes" ] ; then
 for prod in mean ; do
 
  PROD=`echo $prod | tr '[a-z]' '[A-Z]'`
@@ -137,9 +148,7 @@ for prod in mean ; do
   done #end of dom loop
 
 done #end of prod loop
+fi
 
 chmod 775 run_all_href_spcoutlook_poe.sh
-
 export err=$?; err_chk
-exit
-

@@ -8,9 +8,7 @@
 set -x
 
 cd $DATA
-if [ -s wafs_stat.cmdfile ];then
-	rm wafs_stat.cmdfile
-fi
+rm -f wafs_stat.cmdfile
 
 export DATAsemifinal=$DATA/semifinal
 mkdir -p $DATAsemifinal
@@ -72,15 +70,15 @@ for resolution in $resolutions ; do
 done
 
 if [ $SENDCOM = YES ] ; then
-    [ -z `ls -A $STATSOUTfinal` ] || cpreq $STATSOUTfinal/* $COMOUTfinal/.  
-    [ -z `ls -A $STATSOUTsmall` ] || cpreq $STATSOUTsmall/* $COMOUTsmall/.
+    [ -z "`ls -A $STATSOUTfinal`" ] || cp -v $STATSOUTfinal/* $COMOUTfinal/.
+    [ -z "`ls -A $STATSOUTsmall`" ] || cp -v $STATSOUTsmall/* $COMOUTsmall/.
 fi
 
 #########################################
 #Cat'ing errfiles to stdout
 #########################################
 
-log_dir=$DATA/*/METplus_output/logs
+log_dir=$DATA/METplus_output/logs
 log_file_count=$(find $log_dir -type f |wc -l)
 if [[ $log_file_count -ne 0 ]]; then
 	for log_file in $log_dir/*; do

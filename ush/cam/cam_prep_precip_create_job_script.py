@@ -79,16 +79,19 @@ if STEP == 'prep':
                                     f'ccpa.t{VHOURm}z.{OBS_ACC}h.hrap.{NEST}.gb2'
                                 )
                             if not glob.glob(infiles):
-                                print(f"WARNING: Found no matches for {infiles}."
-                                      + f" Cannot copy necessary data into the"
-                                      + f" prep archive ... Continuing to the"
-                                      + f" next valid datetime.")
+                                print(f"WARNING: Currently there are no matches for"
+                                      + f" {infiles}. This is normal, and these"
+                                      + f" files may appear later, to be"
+                                      + f" captured by another prep cycle. Will"
+                                      + f" not attempt to copy into the prep"
+                                      + f" archive ... Continuing to the next"
+                                      + f" valid datetime.")
                                 subtract_hours+=subtract_hours_inc
                                 continue
                             for infile in glob.glob(infiles):
                                 job_cmd_list.append(
                                     f"if [ -f \"{infile}\" ]; then cp \"{infile}\""
-                                    + f" \"{COMOUTobs}/.\"; else echo \"Input {OBSNAME}"
+                                    + f" \"{COMOUTobs}/.\"; else echo \"WARNING: Input {OBSNAME}"
                                     + f" file does not exist: {infile} ..."
                                     + f" Continuing to the next valid datetime.\"; fi"
                                 )
@@ -176,7 +179,7 @@ if STEP == 'prep':
                                 + f" else echo \"Output {OBSNAME} file already"
                                 + f" exists: {COMOUTobs}/{outfilename} ..."
                                 + f" Continuing to the next valid datetime.\"; fi"
-                                + f" else echo \"Input {OBSNAME}"
+                                + f" else echo \"WARNING: Input {OBSNAME}"
                                 + f" file does not exist: {infilepath} ..."
                                 + f" Continuing to the next valid datetime.\"; fi"
                             )
